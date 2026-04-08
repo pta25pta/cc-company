@@ -5,8 +5,9 @@ import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import DepartmentDetail from "./components/DepartmentDetail";
 import FileTree from "./components/FileTree";
-import GraphView from "./components/GraphView";
 import Search from "./components/Search";
+import CalendarView from "./components/CalendarView";
+import WorkTreeView from "./components/WorkTreeView";
 import "./App.css";
 
 export default function App() {
@@ -39,7 +40,7 @@ export default function App() {
   };
 
   if (!data) {
-    return <div className="loading">Loading...</div>;
+    return <div className="loading">読み込み中...</div>;
   }
 
   return (
@@ -57,9 +58,9 @@ export default function App() {
             &#9776;
           </button>
           <h2 className="page-title">
-            {view.type === "dashboard" ? "Dashboard" : view.type === "explorer" ? "Explorer" : view.type === "graph" ? "Graph" : view.type === "search" ? "Search" : view.deptId || ""}
+            {view.type === "dashboard" ? "ダッシュボード" : view.type === "explorer" ? "エクスプローラー" : view.type === "calendar" ? "カレンダー" : view.type === "worktree" ? "ワークツリー" : view.type === "search" ? "検索" : view.deptId || ""}
           </h2>
-          <button className="theme-toggle" onClick={toggleTheme} title={theme === "dark" ? "Light mode" : "Dark mode"}>
+          <button className="theme-toggle" onClick={toggleTheme} title={theme === "dark" ? "ライトモード" : "ダークモード"}>
             {theme === "dark" ? "☀" : "☽"}
           </button>
           <div className="connection-status" />
@@ -67,13 +68,11 @@ export default function App() {
         <div className="content">
           {view.type === "dashboard" && <Dashboard data={data} onNavigate={navigate} />}
           {view.type === "explorer" && <FileTree data={data} onNavigate={navigate} />}
-          {view.type === "graph" && <GraphView data={data} />}
+          {view.type === "calendar" && <CalendarView />}
+          {view.type === "worktree" && <WorkTreeView />}
           {view.type === "search" && <Search onNavigate={navigate} />}
           {view.type === "department" && (
-            <DepartmentDetail
-              deptId={view.deptId}
-              onBack={() => navigate("dashboard")}
-            />
+            <DepartmentDetail deptId={view.deptId} />
           )}
         </div>
       </main>

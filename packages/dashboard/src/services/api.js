@@ -8,3 +8,14 @@ export async function fetchDepartment(id) {
   if (!res.ok) throw new Error("Department not found");
   return res.json();
 }
+
+export async function fetchCalendar(year, month) {
+  const res = await fetch(`/api/calendar?year=${year}&month=${month}`);
+  return res.json();
+}
+
+export async function fetchWorkTree() {
+  const res = await fetch("/api/worktree");
+  if (!res.ok) throw new Error("WorkTree fetch failed");
+  return res.json();
+}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Markdown from "react-markdown";
 import { fetchDepartment } from "../services/api";
 
-export default function DepartmentDetail({ deptId, onBack }) {
+export default function DepartmentDetail({ deptId }) {
   const [dept, setDept] = useState(null);
   const [error, setError] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -30,15 +30,15 @@ export default function DepartmentDetail({ deptId, onBack }) {
     fetch(`/api/file?path=${encodeURIComponent(`${dept}/${filePath}`)}`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => setFileContent(data.content))
-      .catch(() => setFileContent("Failed to load file"));
+      .catch(() => setFileContent("ファイルの読み込みに失敗しました"));
   };
 
   if (error) {
-    return <div className="empty-state">Failed to load department data</div>;
+    return <div className="empty-state">部署データの読み込みに失敗しました</div>;
   }
 
   if (!dept) {
-    return <div className="empty-state">Loading...</div>;
+    return <div className="empty-state">読み込み中...</div>;
   }
 
   return (
@@ -47,7 +47,7 @@ export default function DepartmentDetail({ deptId, onBack }) {
         <h2 className="detail-title">{dept.name}</h2>
         <p className="detail-role">{dept.role}</p>
         <div className="detail-stats">
-          <span className="detail-stat">{dept.files.length} files</span>
+          <span className="detail-stat">{dept.files.length} ファイル</span>
           {getStatusBadges(dept.files)}
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function DepartmentDetail({ deptId, onBack }) {
       <div className="dept-split">
         <div className="dept-split-list">
           {dept.files.length === 0 ? (
-            <div className="empty-state">No files yet</div>
+            <div className="empty-state">ファイルはまだありません</div>
           ) : (
             Object.entries(groupByFolder(dept.files)).map(([folder, files]) => (
               <FolderGroup
@@ -71,10 +71,10 @@ export default function DepartmentDetail({ deptId, onBack }) {
 
         <div className="dept-split-preview">
           {!selectedFile && (
-            <div className="empty-state">Select a file to preview</div>
+            <div className="empty-state">ファイルを選択してください</div>
           )}
           {selectedFile && !fileContent && (
-            <div className="empty-state">Loading...</div>
+            <div className="empty-state">読み込み中...</div>
           )}
           {selectedFile && fileContent && (
             <>
@@ -85,13 +85,13 @@ export default function DepartmentDetail({ deptId, onBack }) {
                     className={`preview-tab ${previewMode === "preview" ? "active" : ""}`}
                     onClick={() => setPreviewMode("preview")}
                   >
-                    Preview
+                    プレビュー
                   </button>
                   <button
                     className={`preview-tab ${previewMode === "raw" ? "active" : ""}`}
                     onClick={() => setPreviewMode("raw")}
                   >
-                    Markdown
+                    マークダウン
                   </button>
                 </div>
               </div>
@@ -165,9 +165,9 @@ function getStatusBadges(files) {
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
+  if (min < 1) return "たった今";
+  if (min < 60) return `${min}分前`;
   const hrs = Math.floor(min / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return `${hrs}時間前`;
+  return `${Math.floor(hrs / 24)}日前`;
 }

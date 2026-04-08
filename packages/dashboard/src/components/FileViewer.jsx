@@ -25,8 +25,8 @@ export default function FileViewer({ deptId, filePath, onClose }) {
           <button className="file-viewer-close" onClick={onClose}>&times;</button>
         </div>
         <div className="file-viewer-body">
-          {error && <div className="empty-state">Failed to load file</div>}
-          {!content && !error && <div className="empty-state">Loading...</div>}
+          {error && <div className="empty-state">ファイルの読み込みに失敗しました</div>}
+          {!content && !error && <div className="empty-state">読み込み中...</div>}
           {content && <pre className="file-viewer-content">{content}</pre>}
         </div>
       </div>

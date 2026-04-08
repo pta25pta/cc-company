@@ -28,7 +28,7 @@ export default function Search({ onNavigate }) {
   return (
     <div className="search-view">
       <div className="dept-detail-top">
-        <h2 className="detail-title">Search</h2>
+        <h2 className="detail-title">検索</h2>
         <p className="detail-role">全ファイルからキーワード検索</p>
       </div>
 
@@ -36,7 +36,7 @@ export default function Search({ onNavigate }) {
         <input
           className="search-input"
           type="text"
-          placeholder="Search..."
+          placeholder="検索..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
@@ -46,7 +46,7 @@ export default function Search({ onNavigate }) {
 
       <div className="search-results">
         {query && !loading && results.length === 0 && (
-          <div className="empty-state">No results for "{query}"</div>
+          <div className="empty-state">「{query}」に該当する結果はありません</div>
         )}
         {results.map((r, i) => (
           <div

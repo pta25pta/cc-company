@@ -8,15 +8,15 @@ export default function OverviewCards({ data }) {
       <Card
         value={stats.incomplete}
         label="TODO"
-        sub={`${stats.complete} completed today`}
+        sub={`${stats.complete}件完了`}
         color={stats.incomplete > 0 ? "var(--yellow)" : "var(--green)"}
       />
-      <Card value={inboxCount} label="Inbox" sub="total entries" color="var(--blue)" />
-      <Card value={deptCount} label="Departments" sub="active" color="var(--primary)" />
+      <Card value={inboxCount} label="受信箱" sub="全エントリ" color="var(--blue)" />
+      <Card value={deptCount} label="部署" sub="稼働中" color="var(--primary)" />
       <Card
         value={stats.complete}
-        label="Completed"
-        sub="today"
+        label="完了"
+        sub="今日"
         color="var(--green)"
       />
     </div>

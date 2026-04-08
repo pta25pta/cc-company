@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
 export default function FileTree({ data, onNavigate }) {
-  const departments = data.departments || [];
   const [tree, setTree] = useState(null);
 
   useEffect(() => {
@@ -12,13 +11,13 @@ export default function FileTree({ data, onNavigate }) {
   }, [data]);
 
   if (!tree) {
-    return <div className="empty-state">Loading...</div>;
+    return <div className="empty-state">読み込み中...</div>;
   }
 
   return (
     <div className="filetree-view">
       <div className="dept-detail-top">
-        <h2 className="detail-title">File Explorer</h2>
+        <h2 className="detail-title">ファイルエクスプローラー</h2>
         <p className="detail-role">.company/ の全体構造</p>
       </div>
       <div className="filetree-container">

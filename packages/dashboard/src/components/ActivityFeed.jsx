@@ -3,9 +3,9 @@ export default function ActivityFeed({ data }) {
 
   return (
     <div className="section">
-      <div className="section-title">Recent Activity</div>
+      <div className="section-title">最近の操作</div>
       {activities.length === 0 ? (
-        <div className="empty-state">No recent activity</div>
+        <div className="empty-state">最近の操作はありません</div>
       ) : (
         activities.slice(0, 15).map((a, i) => (
           <div key={i} className="activity-item">
@@ -22,9 +22,9 @@ export default function ActivityFeed({ data }) {
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
+  if (min < 1) return "たった今";
+  if (min < 60) return `${min}分前`;
   const hrs = Math.floor(min / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return `${hrs}時間前`;
+  return `${Math.floor(hrs / 24)}日前`;
 }

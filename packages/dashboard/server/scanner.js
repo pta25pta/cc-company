@@ -6,6 +6,7 @@ import {
   parseInboxFile,
   parseOrganizationInfo,
   parseDepartmentInfo,
+  parseCheckbox,
   getStatusFromFrontmatter,
 } from "./parser.js";
 
@@ -351,6 +352,241 @@ function extractTitle(body) {
     if (match) return match[1].trim();
   }
   return null;
+}
+
+export function getCalendarData(companyDir, year, month) {
+  const days = {};
+
+  function addTodo(dateStr, todo) {
+    if (!days[dateStr]) days[dateStr] = { todos: [] };
+    days[dateStr].todos.push(todo);
+  }
+
+  function collectCalendarFiles(dir, dept, relBase) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch { return; }
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory() && !entry.name.startsWith(".")) {
+        collectCalendarFiles(fullPath, dept, relBase);
+      } else if (entry.name.endsWith(".md") && entry.name !== "CLAUDE.md" && !entry.name.startsWith("_")) {
+        const fileDate = (entry.name.match(/(\d{4}-\d{2}-\d{2})/) || [])[1] || null;
+        const relativePath = path.relative(relBase, fullPath).replace(/\\/g, "/");
+
+        try {
+          const content = fs.readFileSync(fullPath, "utf-8");
+          for (const line of content.split("\n")) {
+            const trimmed = line.trim();
+            const cb = parseCheckbox(trimmed);
+            if (!cb) continue;
+
+            const targetDate = cb.deadline || fileDate;
+            if (!targetDate) continue;
+
+            const [y, m] = targetDate.split("-").map(Number);
+            if (y !== year || m !== month) continue;
+
+            addTodo(targetDate, {
+              text: cb.text,
+              done: cb.done,
+              priority: cb.priority,
+              department: dept,
+              file: relativePath,
+            });
+          }
+        } catch { /* empty */ }
+      }
+    }
+  }
+
+  // Scan secretary
+  const secDir = path.join(companyDir, "secretary");
+  if (fs.existsSync(secDir)) {
+    collectCalendarFiles(secDir, "secretary", companyDir);
+  }
+
+  // Scan all departments
+  try {
+    const entries = fs.readdirSync(companyDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name === "secretary" || entry.name.startsWith(".")) continue;
+      const deptDir = path.join(companyDir, entry.name);
+      collectCalendarFiles(deptDir, entry.name, companyDir);
+    }
+  } catch { /* empty */ }
+
+  return { year, month, days };
+}
+
+export function getWorkTree(companyDir) {
+  const departments = [];
+  let totalAll = 0;
+  let doneAll = 0;
+
+  let entries;
+  try {
+    entries = fs.readdirSync(companyDir, { withFileTypes: true });
+  } catch {
+    return { departments: [], stats: { total: 0, done: 0 } };
+  }
+
+  // Parse main CLAUDE.md for agent type mapping
+  const agentMap = parseAgentTable(companyDir);
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+
+    const deptDir = path.join(companyDir, entry.name);
+    const deptName = KNOWN_DEPARTMENTS[entry.name] || entry.name;
+    const files = [];
+    let deptTotal = 0;
+    let deptDone = 0;
+
+    collectWorkTreeFiles(deptDir, deptDir, files);
+
+    for (const file of files) {
+      deptTotal += file.stats.total;
+      deptDone += file.stats.done;
+    }
+
+    // Parse agent config from dept CLAUDE.md
+    const mapped = agentMap[entry.name] || {};
+    const deptClaudeMd = path.join(deptDir, "CLAUDE.md");
+    let agentDetail = { capabilities: [], role: "" };
+    if (fs.existsSync(deptClaudeMd)) {
+      agentDetail = parseDeptAgentDetail(
+        fs.readFileSync(deptClaudeMd, "utf-8")
+      );
+    }
+
+    totalAll += deptTotal;
+    doneAll += deptDone;
+    departments.push({
+      id: entry.name,
+      name: mapped.displayName || deptName,
+      files,
+      stats: { total: deptTotal, done: deptDone },
+      agents: mapped.types || [],
+      agentRole: mapped.role || agentDetail.role || "",
+      capabilities: agentDetail.capabilities,
+    });
+  }
+
+  return { departments, stats: { total: totalAll, done: doneAll } };
+}
+
+function parseAgentTable(companyDir) {
+  const claudeMd = path.join(companyDir, "CLAUDE.md");
+  if (!fs.existsSync(claudeMd)) return {};
+
+  const content = fs.readFileSync(claudeMd, "utf-8");
+  const mapping = {};
+  const lines = content.split("\n");
+  let inTable = false;
+
+  for (const line of lines) {
+    if (line.includes("| 部署") && line.includes("エージェント")) {
+      inTable = true;
+      continue;
+    }
+    if (!inTable) continue;
+    if (line.trim().startsWith("|---")) continue;
+    if (!line.trim().startsWith("|")) { inTable = false; continue; }
+
+    const cols = line.split("|").map((c) => c.trim()).filter(Boolean);
+    if (cols.length < 4) continue;
+
+    const displayName = cols[0];
+    const folder = cols[1];
+    const role = cols[2];
+    const agentStr = cols[3];
+
+    const types = [];
+    for (const t of ["Bash", "Explore", "Plan"]) {
+      if (agentStr.includes(t)) types.push(t);
+    }
+
+    mapping[folder] = { displayName, role, types };
+  }
+
+  return mapping;
+}
+
+function parseDeptAgentDetail(content) {
+  const result = { capabilities: [], role: "" };
+
+  // Role from first ## 役割 section
+  const roleMatch = content.match(/##\s*役割\n([\s\S]*?)(?=\n##|$)/);
+  if (roleMatch) {
+    result.role = roleMatch[1].trim().split("\n")[0].trim();
+  }
+
+  // Capabilities from ## エージェント能力
+  const capMatch = content.match(
+    /##\s*エージェント能力\n([\s\S]*?)(?=\n##|$)/
+  );
+  if (capMatch) {
+    for (const line of capMatch[1].split("\n")) {
+      const m = line.match(/^-\s+(.+)/);
+      if (m) result.capabilities.push(m[1].replace(/\*\*/g, "").trim());
+    }
+  }
+
+  return result;
+}
+
+function collectWorkTreeFiles(baseDir, dir, results) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory() && !entry.name.startsWith(".")) {
+      collectWorkTreeFiles(baseDir, fullPath, results);
+    } else if (
+      entry.name.endsWith(".md") &&
+      entry.name !== "CLAUDE.md" &&
+      !entry.name.startsWith("_")
+    ) {
+      try {
+        const content = fs.readFileSync(fullPath, "utf-8");
+        const tasks = [];
+        for (const line of content.split("\n")) {
+          const cb = parseCheckbox(line.trim());
+          if (cb) {
+            tasks.push({
+              text: cb.text,
+              done: cb.done,
+              priority: cb.priority,
+            });
+          }
+        }
+        if (tasks.length > 0) {
+          const relativePath = path
+            .relative(baseDir, fullPath)
+            .replace(/\\/g, "/");
+          const title =
+            extractTitle(content) || entry.name.replace(".md", "");
+          const done = tasks.filter((t) => t.done).length;
+          results.push({
+            path: relativePath,
+            title,
+            tasks,
+            stats: { total: tasks.length, done },
+          });
+        }
+      } catch {
+        /* empty */
+      }
+    }
+  }
 }
 
 function formatDate(date) {

@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { scan, scanDepartment, scanTree } from "./scanner.js";
+import { scan, scanDepartment, scanTree, getCalendarData, getWorkTree } from "./scanner.js";
 import { createWatcher } from "./watcher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -89,9 +89,10 @@ export function startServer(companyDir, port) {
     if (!filePath) return res.status(400).json({ error: "path required" });
 
     const safePath = path.normalize(filePath).replace(/\.\./g, "");
-    const fullPath = path.join(companyDir, safePath);
+    const fullPath = path.resolve(companyDir, safePath);
+    const resolvedCompany = path.resolve(companyDir);
 
-    if (!fullPath.startsWith(companyDir)) {
+    if (!fullPath.startsWith(resolvedCompany)) {
       return res.status(403).json({ error: "Access denied" });
     }
 
@@ -134,8 +135,19 @@ export function startServer(companyDir, port) {
     res.json(results.slice(0, 30));
   });
 
+  app.get("/api/calendar", (req, res) => {
+    const now = new Date();
+    const year = parseInt(req.query.year) || now.getFullYear();
+    const month = parseInt(req.query.month) || now.getMonth() + 1;
+    res.json(getCalendarData(companyDir, year, month));
+  });
+
   app.get("/api/tree", (_req, res) => {
     res.json(scanTree(companyDir));
+  });
+
+  app.get("/api/worktree", (_req, res) => {
+    res.json(getWorkTree(companyDir));
   });
 
   app.get("/api/activity", (_req, res) => {

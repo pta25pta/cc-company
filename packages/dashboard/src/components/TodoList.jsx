@@ -4,8 +4,8 @@ export default function TodoList({ data }) {
   if (!today) {
     return (
       <div className="section">
-        <div className="section-title">Today's TODO</div>
-        <div className="empty-state">No TODOs for today</div>
+        <div className="section-title">今日のTODO</div>
+        <div className="empty-state">今日のTODOはありません</div>
       </div>
     );
   }
@@ -14,11 +14,11 @@ export default function TodoList({ data }) {
 
   return (
     <div className="section">
-      <div className="section-title">Today's TODO &mdash; {today.date}</div>
-      <TodoGroup title="Top Priority" items={sections.topPriority} />
-      <TodoGroup title="Normal" items={sections.normal} />
-      <TodoGroup title="Low Priority" items={sections.low} />
-      <TodoGroup title="Completed" items={sections.completed} />
+      <div className="section-title">今日のTODO &mdash; {today.date}</div>
+      <TodoGroup title="最優先" items={sections.topPriority} />
+      <TodoGroup title="通常" items={sections.normal} />
+      <TodoGroup title="低優先" items={sections.low} />
+      <TodoGroup title="完了済み" items={sections.completed} />
     </div>
   );
 }

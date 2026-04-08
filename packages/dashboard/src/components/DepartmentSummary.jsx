@@ -4,9 +4,9 @@ export default function DepartmentSummary({ data, onNavigate }) {
 
   return (
     <div className="section">
-      <div className="section-title">Departments</div>
+      <div className="section-title">部署</div>
       {departments.length === 0 ? (
-        <div className="empty-state">No departments found</div>
+        <div className="empty-state">部署はまだありません</div>
       ) : (
         <div className="dept-grid">
           {departments.map((dept) => (
@@ -17,7 +17,7 @@ export default function DepartmentSummary({ data, onNavigate }) {
             >
               <div className="dept-card-name">{dept.name}</div>
               <div className="dept-card-role">{dept.role}</div>
-              <div className="dept-card-files">{dept.fileCount} files</div>
+              <div className="dept-card-files">{dept.fileCount} ファイル</div>
               {stats[dept.id] && (
                 <div className="status-bar">
                   {Object.entries(stats[dept.id]).map(([status, count]) => (

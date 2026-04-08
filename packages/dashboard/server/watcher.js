@@ -18,8 +18,10 @@ export function createWatcher(companyDir, onChange) {
 
   watcher
     .on("add", (p) => handleChange("add", p))
+    .on("addDir", (p) => handleChange("addDir", p))
     .on("change", (p) => handleChange("change", p))
-    .on("unlink", (p) => handleChange("unlink", p));
+    .on("unlink", (p) => handleChange("unlink", p))
+    .on("unlinkDir", (p) => handleChange("unlinkDir", p));
 
   return watcher;
 }
