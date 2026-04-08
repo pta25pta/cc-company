@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import MermaidBlock from "./MermaidBlock";
 import { fetchDepartment } from "../services/api";
 
@@ -100,7 +101,7 @@ export default function DepartmentDetail({ deptId }) {
                 <pre className="preview-content">{fileContent}</pre>
               ) : (
                 <div className="preview-rendered">
-                  <Markdown components={{ code: CodeBlock }}>{stripFrontmatter(fileContent)}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock }}>{stripFrontmatter(fileContent)}</Markdown>
                 </div>
               )}
             </>
@@ -158,7 +159,7 @@ function groupByFolder(files) {
 }
 
 function stripFrontmatter(content) {
-  return content.replace(/^---\n[\s\S]*?\n---\n*/, "");
+  return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n*/, "");
 }
 
 function getStatusBadges(files) {
