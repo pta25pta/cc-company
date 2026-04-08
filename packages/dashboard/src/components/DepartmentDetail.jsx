@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Markdown from "react-markdown";
+import MermaidBlock from "./MermaidBlock";
 import { fetchDepartment } from "../services/api";
 
 export default function DepartmentDetail({ deptId }) {
@@ -99,7 +100,7 @@ export default function DepartmentDetail({ deptId }) {
                 <pre className="preview-content">{fileContent}</pre>
               ) : (
                 <div className="preview-rendered">
-                  <Markdown>{stripFrontmatter(fileContent)}</Markdown>
+                  <Markdown components={{ code: CodeBlock }}>{stripFrontmatter(fileContent)}</Markdown>
                 </div>
               )}
             </>
@@ -108,6 +109,14 @@ export default function DepartmentDetail({ deptId }) {
       </div>
     </div>
   );
+}
+
+function CodeBlock({ className, children, ...props }) {
+  const lang = /language-(\w+)/.exec(className || "")?.[1];
+  if (lang === "mermaid") {
+    return <MermaidBlock chart={String(children)} />;
+  }
+  return <code className={className} {...props}>{children}</code>;
 }
 
 function FolderGroup({ folder, files, selectedFile, onSelectFile }) {
